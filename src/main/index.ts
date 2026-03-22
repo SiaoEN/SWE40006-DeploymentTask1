@@ -3,8 +3,11 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../build/icon.ico?asset'
 
-// Import autoUpdater
+// Import autoUpdater and configure it
 import { autoUpdater } from 'electron-updater'
+
+// Configure autoUpdater to use GitHub
+autoUpdater.checkForUpdatesAndNotify()
 
 let mainWindow: BrowserWindow
 
@@ -24,8 +27,12 @@ function createWindow(): void {
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
 
-    // Check for updates once window is ready
-    autoUpdater.checkForUpdatesAndNotify()
+    // Try to check for updates
+    console.log('[Auto-Update] Checking for updates...')
+    console.log('[Auto-Update] Current version:', app.getVersion())
+    autoUpdater.checkForUpdates().catch((error: Error) => {
+      console.error('[Auto-Update] Check for updates failed:', error.message)
+    })
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -41,13 +48,28 @@ function createWindow(): void {
 }
 
 // Auto-updater events
-autoUpdater.on('update-available', () => {
-  mainWindow!.webContents.send('update_available')
+autoUpdater.on('checking-for-update', () => {
+  console.log('[Auto-Update] Checking for update...')
 })
 
-autoUpdater.on('update-downloaded', () => {
-  mainWindow!.webContents.send('update_downloaded')
-  autoUpdater.quitAndInstall()
+autoUpdater.on('update-available', (info) => {
+  console.log('[Auto-Update] Update available:', info.version)
+  mainWindow!.webContents.send('update_available', { version: info.version })
+})
+
+autoUpdater.on('update-not-available', () => {
+  console.log('[Auto-Update] No updates available')
+})
+
+autoUpdater.on('update-downloaded', (info) => {
+  console.log('[Auto-Update] Update downloaded:', info.version)
+  mainWindow!.webContents.send('update_downloaded', { version: info.version })
+  // Don't auto-install immediately - let renderer decide when to call quitAndInstall
+})
+
+autoUpdater.on('error', (error) => {
+  console.error('[Auto-Update] Error:', error.message)
+  mainWindow?.webContents.send('update_error', { error: error.message })
 })
 
 app.setName("Pomodoro Timer")
@@ -59,6 +81,11 @@ app.whenReady().then(() => {
   })
 
   ipcMain.on('ping', () => console.log('pong'))
+
+  ipcMain.on('install-update', () => {
+    console.log('[Auto-Update] Installing update now...')
+    autoUpdater.quitAndInstall()
+  })
 
   createWindow()
 
