@@ -13,7 +13,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  icon: icon.ico
+  icon: build/icons/win/icon.ico
   executableName: PomodoroTimer
   signAndEditExecutable: false
 nsis:
@@ -21,6 +21,8 @@ nsis:
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
+  installerIcon: build/icons/win/icon.ico
+  uninstallerIcon: build/icons/win/icon.ico
 mac:
   icon: icon.icns
   entitlementsInherit: build/entitlements.mac.plist
