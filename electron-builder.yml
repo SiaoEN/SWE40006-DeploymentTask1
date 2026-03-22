@@ -15,7 +15,6 @@ asarUnpack:
 win:
   icon: build/icons/win/icon.ico
   executableName: PomodoroTimer
-  signAndEditExecutable: false
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
