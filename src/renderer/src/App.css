@@ -1,20 +1,58 @@
+html, body {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: #e8bc63;
   color: #1e293b;
+  margin: 0;
+}
+
+.app-layout {
+  max-width: 1200px;
+  margin: 50px auto 50px auto;
+  padding: 0 1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
 }
 
 /* Light background scheme */
 .app-container {
-  max-width: 560px;
-  margin: 3rem auto;
+  width: 100%;
   padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-  text-align: center;
-  margin-top: 50px;
   background-color: #f3f0b9;
   font-family: Arial, sans-serif;
+}
+
+.timer-panel {
+  text-align: center;
+}
+
+.stats-panel {
+  text-align: left;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.stats-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.stats-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.stats-panel::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
 }
 
 /* Mode label */
@@ -98,6 +136,23 @@ body {
   color: #333;
 }
 
+.session-log-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.clear-today {
+  background-color: #64748b;
+  color: white;
+}
+
+.clear-all {
+  background-color: #7f1d1d;
+  color: white;
+}
+
 .session-log .empty {
   color: #888;
   font-style: italic;
@@ -109,7 +164,27 @@ body {
 }
 
 .session-log .session-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
   padding: 6px 0;
   border-bottom: 1px solid #eee;
   font-size: 0.95rem;
+}
+
+.record-delete {
+  border: none;
+  background: transparent;
+  color: #7f1d1d;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.record-delete:hover {
+  background-color: rgba(127, 29, 29, 0.12);
 }

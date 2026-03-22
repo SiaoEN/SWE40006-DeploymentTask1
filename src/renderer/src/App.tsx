@@ -44,15 +44,66 @@ import SessionLog from "./components/SessionLog";
 import Statistics from "./components/Statistics";
 import TimerDisplay from "./components/TimerDisplay";
 
+type Session = {
+  completedAt: Date;
+  type: "work" | "break";
+  durationMinutes: number;
+};
+
 function App() {
   const [customMinutes, setCustomMinutes] = useState(25); // default 25
   const [timeLeft, setTimeLeft] = useState(customMinutes * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [isWork, setIsWork] = useState(true);
   const [endTime, setEndTime] = useState<Date | null>(null);
-  const [sessions, setSessions] = useState<{ time: Date; type: "work" | "break" }[]>([]);
+  const [sessions, setSessions] = useState<Session[]>(() => {
+    const saved = localStorage.getItem('pomodoroSessions');
+    if (!saved) return [];
+    try {
+      const parsed = JSON.parse(saved);
+      return parsed.map((s: any) => ({
+        ...s,
+        completedAt: new Date(s.completedAt)
+      }));
+    } catch {
+      return [];
+    }
+  });
 
   const beepRef = useRef(new Audio(beepSound));
+
+  useEffect(() => {
+    beepRef.current.preload = "auto";
+    beepRef.current.volume = 1;
+  }, []);
+
+  const playBeep = () => {
+    const audio = beepRef.current;
+    audio.currentTime = 0;
+    void audio.play().catch(() => {
+      // ignore intermittent autoplay/audio-device promise errors
+    });
+  };
+
+  const primeBeepAudio = () => {
+    const audio = beepRef.current;
+    const previousMuted = audio.muted;
+    audio.muted = true;
+    audio.currentTime = 0;
+    void audio.play()
+      .then(() => {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.muted = previousMuted;
+      })
+      .catch(() => {
+        audio.muted = previousMuted;
+      });
+  };
+
+  useEffect(() => {
+    localStorage.setItem('pomodoroSessions', JSON.stringify(sessions));
+  }, [sessions]);
 
   useEffect(() => {
   let timer: NodeJS.Timeout | null = null;
@@ -62,8 +113,17 @@ function App() {
       setTimeLeft(diff);
 
       if (diff === 0) {
-        beepRef.current.play();
-        setSessions((prev) => [...prev, { time: new Date(), type: isWork ? "work" : "break" }]);
+        playBeep();
+        const completedSessionType: Session["type"] = isWork ? "work" : "break";
+        const completedDurationMinutes = completedSessionType === "work" ? customMinutes : 5;
+        setSessions((prev) => [
+          ...prev,
+          {
+            completedAt: new Date(),
+            type: completedSessionType,
+            durationMinutes: completedDurationMinutes
+          }
+        ]);
 
         setIsWork((prev) => !prev);
         const nextDuration = isWork ? 5 * 60 : customMinutes * 60;
@@ -140,20 +200,44 @@ function App() {
 // }
 
   const startTimer = () => {
+  primeBeepAudio();
   const newEndTime = new Date(Date.now() + timeLeft * 1000);
   setEndTime(newEndTime);
   setIsRunning(true);
   setTimeLeft(Math.floor((newEndTime.getTime() - Date.now()) / 1000)); // ensures full duration shows
 };
 
+  const clearTodayRecords = () => {
+    const today = new Date().toDateString();
+    setSessions((prev) => prev.filter((session) => session.completedAt.toDateString() !== today));
+  };
+
+  const clearAllRecords = () => {
+    setSessions([]);
+  };
+
+  const deleteSingleRecord = (indexToDelete: number) => {
+    setSessions((prev) => prev.filter((_, index) => index !== indexToDelete));
+  };
+
  return (
-    <div className="app-container">
-      <ModeLabel isWork={isWork} />
-      <TimerDisplay timeLeft={timeLeft} />
-      <DurationSlider customMinutes={customMinutes} setCustomMinutes={setCustomMinutes} setTimeLeft={setTimeLeft} />
-      <Controls isWork={isWork} customMinutes={customMinutes} setIsWork={setIsWork} setIsRunning={setIsRunning} setTimeLeft={setTimeLeft} startTimer={startTimer} />
-      <SessionLog sessions={sessions} />
-      <Statistics />
+    <div className="app-layout">
+      <div className="app-container timer-panel">
+        <ModeLabel isWork={isWork} />
+        <TimerDisplay timeLeft={timeLeft} />
+        <DurationSlider customMinutes={customMinutes} setCustomMinutes={setCustomMinutes} setTimeLeft={setTimeLeft} />
+        <Controls isWork={isWork} customMinutes={customMinutes} setIsWork={setIsWork} setIsRunning={setIsRunning} setTimeLeft={setTimeLeft} startTimer={startTimer} />
+        <SessionLog
+          sessions={sessions}
+          onClearToday={clearTodayRecords}
+          onClearAll={clearAllRecords}
+          onDeleteRecord={deleteSingleRecord}
+        />
+      </div>
+
+      <div className="app-container stats-panel">
+        <Statistics sessions={sessions} />
+      </div>
     </div>
   );
 }
