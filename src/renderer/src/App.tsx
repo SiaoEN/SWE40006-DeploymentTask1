@@ -41,6 +41,7 @@ import Controls from "./components/Controls";
 import DurationSlider from "./components/DurationSlider";
 import ModeLabel from "./components/ModeLabel";
 import SessionLog from "./components/SessionLog";
+import Statistics from "./components/Statistics";
 import TimerDisplay from "./components/TimerDisplay";
 
 function App() {
@@ -152,6 +153,7 @@ function App() {
       <DurationSlider customMinutes={customMinutes} setCustomMinutes={setCustomMinutes} setTimeLeft={setTimeLeft} />
       <Controls isWork={isWork} customMinutes={customMinutes} setIsWork={setIsWork} setIsRunning={setIsRunning} setTimeLeft={setTimeLeft} startTimer={startTimer} />
       <SessionLog sessions={sessions} />
+      <Statistics />
     </div>
   );
 }
