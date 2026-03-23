@@ -13,16 +13,17 @@ files:
 asarUnpack:
   - resources/**
 win:
-  icon: icon.ico
+  icon: build/icons/win/icon.ico
   executableName: PomodoroTimer
-  signAndEditExecutable: false
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
+  installerIcon: build/icons/win/icon.ico
+  uninstallerIcon: build/icons/win/icon.ico
 mac:
-  icon: icon.icns
+  icon: build/icons/mac/icon.icns
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.

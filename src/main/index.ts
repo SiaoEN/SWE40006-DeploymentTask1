@@ -1,13 +1,20 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { autoUpdater } from 'electron-updater'
 import icon from '../../build/icon.ico?asset'
+
+let mainWindow: BrowserWindow
+
+autoUpdater.autoDownload = true
+autoUpdater.autoInstallOnAppQuit = true
 
 function createWindow(): void {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
+    title: 'Pomodoro Timer',
     show: false,
     autoHideMenuBar: true,
     icon,
@@ -19,6 +26,15 @@ function createWindow(): void {
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
+
+    if (!is.dev) {
+      setTimeout(() => {
+        void autoUpdater.checkForUpdates().catch((error: Error) => {
+          console.error('[Auto-Update] Check for updates failed:', error.message)
+          mainWindow?.webContents.send('update_error', { error: error.message })
+        })
+      }, 1000)
+    }
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -34,6 +50,57 @@ function createWindow(): void {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
 }
+
+autoUpdater.on('checking-for-update', () => {
+  console.log('[Auto-Update] Checking for updates...')
+})
+
+autoUpdater.on('update-available', (info) => {
+  console.log('[Auto-Update] Update available:', info.version)
+  mainWindow?.webContents.send('update_available', { version: info.version })
+})
+
+autoUpdater.on('update-not-available', () => {
+  console.log('[Auto-Update] No updates available')
+})
+
+autoUpdater.on('download-progress', (progress) => {
+  mainWindow?.webContents.send('update_download_progress', {
+    percent: progress.percent,
+    transferred: progress.transferred,
+    total: progress.total
+  })
+})
+
+autoUpdater.on('update-downloaded', (info) => {
+  console.log('[Auto-Update] Update downloaded:', info.version)
+  mainWindow?.webContents.send('update_downloaded', { version: info.version })
+
+  if (!mainWindow) {
+    return
+  }
+
+  void dialog
+    .showMessageBox(mainWindow, {
+      type: 'info',
+      buttons: ['Install and Restart', 'Later'],
+      defaultId: 0,
+      cancelId: 1,
+      title: 'Update Ready',
+      message: `Version ${info.version} has been downloaded.`,
+      detail: 'Install the update now and restart the app?'
+    })
+    .then((result) => {
+      if (result.response === 0) {
+        autoUpdater.quitAndInstall()
+      }
+    })
+})
+
+autoUpdater.on('error', (error) => {
+  console.error('[Auto-Update] Error:', error.message)
+  mainWindow?.webContents.send('update_error', { error: error.message })
+})
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -52,6 +119,9 @@ app.whenReady().then(() => {
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
+  ipcMain.on('install-update', () => {
+    autoUpdater.quitAndInstall()
+  })
 
   createWindow()
 

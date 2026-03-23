@@ -14,14 +14,14 @@
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "build": "npm run typecheck && electron-vite build",
-    "dist": "set PATH=%SystemRoot%\\System32;%PATH%&& electron-builder",
+    "dist": "set PATH=%SystemRoot%\\System32;%PATH%&& electron-builder --config electron-builder.yml",
     "postinstall": "electron-builder install-app-deps",
-    "build:unpack": "npm run build && electron-builder --dir",
-    "build:win": "set PATH=%SystemRoot%\\System32;%PATH%&& npm run build && electron-builder --win",
-    "build:mac": "electron-vite build && electron-builder --mac",
-    "build:linux": "electron-vite build && electron-builder --linux",
-    "package:win": "set PATH=%SystemRoot%\\System32;%PATH%&& npm run build && electron-builder --win",
-    "package:mac": "npm run build && electron-builder --mac"
+    "build:unpack": "npm run build && electron-builder --config electron-builder.yml --dir",
+    "build:win": "set PATH=%SystemRoot%\\System32;%PATH%&& npm run build && electron-builder --config electron-builder.yml --win",
+    "build:mac": "electron-vite build && electron-builder --config electron-builder.yml --mac",
+    "build:linux": "electron-vite build && electron-builder --config electron-builder.yml --linux",
+    "package:win": "set PATH=%SystemRoot%\\System32;%PATH%&& npm run build && electron-builder --config electron-builder.yml --win",
+    "package:mac": "npm run build && electron-builder --config electron-builder.yml --mac"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
