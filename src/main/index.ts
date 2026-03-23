@@ -14,7 +14,7 @@ function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
-    title: 'Pomodoro Timer',
+    title: 'Pomodoro Timer v1.0.0',
     show: false,
     autoHideMenuBar: true,
     icon,
