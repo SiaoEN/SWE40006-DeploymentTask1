@@ -8,10 +8,13 @@ import { autoUpdater } from 'electron-updater'
 
 let mainWindow: BrowserWindow
 
+autoUpdater.autoDownload = false
+
 function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
+    title: 'Pomodoro Timer v1.1.0',
     show: false,
     autoHideMenuBar: true,
     icon,
@@ -24,12 +27,15 @@ function createWindow(): void {
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
 
-    // Try to check for updates
-    console.log('[Auto-Update] Checking for updates...')
-    console.log('[Auto-Update] Current version:', app.getVersion())
-    autoUpdater.checkForUpdates().catch((error: Error) => {
-      console.error('[Auto-Update] Check for updates failed:', error.message)
-    })
+    // Delay update check to ensure window is fully ready
+    setTimeout(() => {
+      console.log('[Auto-Update] Checking for updates...')
+      console.log('[Auto-Update] Current version:', app.getVersion())
+      console.log('[Auto-Update] Feed URL:', autoUpdater.currentVersion)
+      autoUpdater.checkForUpdates().catch((error: Error) => {
+        console.error('[Auto-Update] Check for updates failed:', error.message)
+      })
+    }, 1000)
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -52,6 +58,35 @@ autoUpdater.on('checking-for-update', () => {
 autoUpdater.on('update-available', (info) => {
   console.log('[Auto-Update] Update available:', info.version)
   mainWindow?.webContents.send('update_available', { version: info.version })
+
+  if (!mainWindow) {
+    console.warn('[Auto-Update] mainWindow not available, skipping dialog')
+    return
+  }
+
+  dialog
+    .showMessageBox(mainWindow, {
+      type: 'info',
+      buttons: ['Download', 'Later'],
+      defaultId: 0,
+      cancelId: 1,
+      title: 'Update Available',
+      message: `Version ${info.version} is available.`,
+      detail: 'Do you want to download the update now?'
+    })
+    .then((result) => {
+      console.log('[Auto-Update] User choice:', result.response === 0 ? 'Download' : 'Later')
+      if (result.response === 0) {
+        console.log('[Auto-Update] Starting download...')
+        autoUpdater.downloadUpdate().catch((error: Error) => {
+          console.error('[Auto-Update] Download failed:', error.message)
+          mainWindow?.webContents.send('update_error', { error: error.message })
+        })
+      }
+    })
+    .catch((error: Error) => {
+      console.error('[Auto-Update] Dialog error:', error.message)
+    })
 })
 
 autoUpdater.on('update-not-available', () => {
