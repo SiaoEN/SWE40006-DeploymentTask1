@@ -14,10 +14,7 @@ function Root() {
 
     const onUpdateDownloaded = (_: any, data: { version: string }) => {
       console.log('[Update] Update downloaded:', data.version)
-      const willRestart = confirm(`Update to v${data.version} downloaded! Click OK to install and restart.`)
-      if (willRestart) {
-        window.electron.ipcRenderer.send('install-update')
-      }
+      alert(`Update to v${data.version} downloaded. You will be prompted to install.`)
     }
 
     const onUpdateError = (_: any, data: { error: string }) => {

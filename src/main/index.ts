@@ -1,13 +1,10 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../build/icon.ico?asset'
 
-// Import autoUpdater and configure it
+// Import autoUpdater
 import { autoUpdater } from 'electron-updater'
-
-// Configure autoUpdater to use GitHub
-autoUpdater.checkForUpdatesAndNotify()
 
 let mainWindow: BrowserWindow
 
@@ -54,7 +51,7 @@ autoUpdater.on('checking-for-update', () => {
 
 autoUpdater.on('update-available', (info) => {
   console.log('[Auto-Update] Update available:', info.version)
-  mainWindow!.webContents.send('update_available', { version: info.version })
+  mainWindow?.webContents.send('update_available', { version: info.version })
 })
 
 autoUpdater.on('update-not-available', () => {
@@ -63,8 +60,23 @@ autoUpdater.on('update-not-available', () => {
 
 autoUpdater.on('update-downloaded', (info) => {
   console.log('[Auto-Update] Update downloaded:', info.version)
-  mainWindow!.webContents.send('update_downloaded', { version: info.version })
-  // Don't auto-install immediately - let renderer decide when to call quitAndInstall
+  mainWindow?.webContents.send('update_downloaded', { version: info.version })
+
+  void dialog
+    .showMessageBox(mainWindow, {
+      type: 'info',
+      buttons: ['Install and Restart', 'Later'],
+      defaultId: 0,
+      cancelId: 1,
+      title: 'Update Ready',
+      message: `Version ${info.version} has been downloaded.`,
+      detail: 'Install the update now and restart the app?'
+    })
+    .then((result) => {
+      if (result.response === 0) {
+        autoUpdater.quitAndInstall()
+      }
+    })
 })
 
 autoUpdater.on('error', (error) => {
